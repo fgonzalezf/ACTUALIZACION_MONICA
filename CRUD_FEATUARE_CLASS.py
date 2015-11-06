@@ -334,8 +334,49 @@ else:
                         pass
 
 
+import xlwt
 
+try:
+    tabla="in_memory/tabla"
 
-arcpy.TableToExcel_conversion("in_memory/tabla",excel)
-arcpy.Delete_management("in_memory/tableInMemory")
-arcpy.Delete_management("LayerPuntos")
+    style = xlwt.XFStyle()
+    pattern = xlwt.Pattern()
+    pattern.pattern = xlwt.Pattern.SOLID_PATTERN
+    pattern.pattern_fore_colour = xlwt.Style.colour_map['orange']
+    style.pattern = pattern
+
+    styleHeader = xlwt.XFStyle()
+    pattern = xlwt.Pattern()
+    pattern.pattern = xlwt.Pattern.SOLID_PATTERN
+    pattern.pattern_fore_colour = xlwt.Style.colour_map['gray25']
+    styleHeader.pattern = pattern
+
+    wb = xlwt.Workbook()
+    ws = wb.add_sheet('A Test Sheet')
+
+    #Encabezado
+    i=0
+    for nom in fieldsTablaExp:
+        ws.write(0, i, nom, styleHeader)
+        i=i+1
+    Z=1
+    with arcpy.da.SearchCursor(tabla, fieldsTablaExp) as cursor:
+            for row in cursor:
+                ws.write(Z, 0, row[0])
+                for x in range(0, (len(fieldsTablaExp)-1)/2):
+                    if row[2*x+1]==row[2*x+2] or(row[2*x+1]=="" and row[2*x+2]== None ) or (row[2*x+1]==None and row[2*x+2]== "" ) :
+                        ws.write(Z, 2*x+1, row[2*x+1])
+                        ws.write(Z, 2*x+2, row[2*x+2])
+                    else:
+                        ws.write(Z, 2*x+1, row[2*x+1],style)
+                        ws.write(Z, 2*x+2, row[2*x+2],style)
+                Z=Z+1
+
+    wb.save(excel)
+
+    #arcpy.TableToExcel_conversion("in_memory/tabla",excel)
+    arcpy.Delete_management("in_memory/tabla")
+    arcpy.Delete_management("LayerPuntos")
+except Exception as e:
+    arcpy.AddMessage("Error Exportando Tabla: "+ e.message)
+
